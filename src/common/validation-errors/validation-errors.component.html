@@ -1,0 +1,8 @@
+@if (fieldState().touched() && fieldState().errors(); as errors) { @for (error
+of errors; track error) {
+<div class="error-message">
+  {{ error.message }}
+</div>
+} } @if (fieldState().pending()) {
+<div class="pending-message">Checking availability...</div>
+}

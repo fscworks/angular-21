@@ -1,0 +1,231 @@
+<div class="page">
+  <header>
+    <h1>Angular 21</h1>
+  </header>
+  <main>
+    <div class="form-container">
+      <h2>Create Account</h2>
+      <form>
+        <section>
+          <h3>Account Details</h3>
+          <div class="form-grid">
+            @let username = form.username();
+            <div class="field">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                type="text"
+                [field]="form.username"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="username"
+              ></app-validation-errors>
+            </div>
+
+            @let email = form.email();
+            <div class="field">
+              <label for="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                [field]="form.email"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="email"
+              ></app-validation-errors>
+            </div>
+
+            @let accountType = form.accountType();
+            <div class="field">
+              <label for="accountType">Account Type</label>
+              <select
+                id="accountType"
+                type="accountType"
+                [field]="form.accountType"
+                autocomplete="none"
+                autofill="none"
+              >
+                <option [value]="AccountTypeEnum.USER">User</option>
+                <option [value]="AccountTypeEnum.MODERATOR">Moderator</option>
+                <option [value]="AccountTypeEnum.ADMIN">Admin</option>
+              </select>
+              <app-validation-errors
+                [fieldState]="accountType"
+              ></app-validation-errors>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>Personal Details</h3>
+          <div class="form-grid">
+            @let firstname = form.firstname();
+            <div class="field">
+              <label for="firstname">First Name</label>
+              <input
+                id="firstname"
+                type="text"
+                [field]="form.firstname"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="firstname"
+              ></app-validation-errors>
+            </div>
+
+            @let lastname = form.lastname();
+            <div class="field">
+              <label for="lastname">Last Name</label>
+              <input
+                id="lastname"
+                type="text"
+                [field]="form.lastname"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="lastname"
+              ></app-validation-errors>
+            </div>
+          </div>
+        </section>
+        <section>
+          <h3>Address Details</h3>
+          <app-address-form [form]="form.address"></app-address-form>
+        </section>
+
+        <section>
+          <h3>Settings</h3>
+          <div class="form-grid">
+            <div class="grid-split">
+              @let canEditUsers = form.canEditUsers(); @if
+              (!canEditUsers.hidden()) {
+              <div class="field field--switch">
+                <label for="canEditUsers">Edit Users</label>
+                <label class="switch">
+                  <input
+                    id="canEditUsers"
+                    type="checkbox"
+                    [field]="form.canEditUsers"
+                    autocomplete="none"
+                    autofill="none"
+                  />
+                  <span class="slider round"></span>
+                </label>
+                <app-validation-errors
+                  [fieldState]="canEditUsers"
+                ></app-validation-errors>
+              </div>
+              }
+              <div class="field field--switch">
+                @let canEditPersonalInfo = form.canEditPersonalInfo();
+
+                <label for="canEditPersonalInfo">Edit Info</label>
+                <label class="switch">
+                  <input
+                    id="canEditPersonalInfo"
+                    type="checkbox"
+                    [field]="form.canEditPersonalInfo"
+                    autocomplete="none"
+                    autofill="none"
+                  />
+                  <span class="slider round"></span>
+                </label>
+                <app-validation-errors
+                  [fieldState]="canEditPersonalInfo"
+                ></app-validation-errors>
+              </div>
+              <div class="field field--switch">
+                @let setUserPassword = form.setUserPassword();
+
+                <label for="setUserPassword">Set User Password</label>
+                <label class="switch">
+                  <input
+                    id="setUserPassword"
+                    type="checkbox"
+                    [field]="form.setUserPassword"
+                    autocomplete="none"
+                    autofill="none"
+                  />
+                  <span class="slider round"></span>
+                </label>
+                <app-validation-errors
+                  [fieldState]="setUserPassword"
+                ></app-validation-errors>
+              </div>
+            </div>
+            <div class="field">
+              @let profileUrl = form.profileUrl();
+              <label for="profileUrl">Profile URL</label>
+              <input
+                id="profileUrl"
+                type="text"
+                [field]="form.profileUrl"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="profileUrl"
+              ></app-validation-errors>
+            </div>
+          </div>
+        </section>
+        @if (setUserPassword.value()) {
+        <section>
+          <h3>Security</h3>
+          <div class="form-grid">
+            @let password = form.password();
+            <div class="field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                [field]="form.password"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="password"
+              ></app-validation-errors>
+            </div>
+
+            @let passwordConfirm = form.passwordConfirm();
+            <div class="field">
+              <label for="passwordConfirm">Confirm Password</label>
+              <input
+                id="passwordConfirm"
+                type="password"
+                [field]="form.passwordConfirm"
+                autocomplete="none"
+                autofill="none"
+              />
+              <app-validation-errors
+                [fieldState]="passwordConfirm"
+              ></app-validation-errors>
+            </div>
+          </div>
+        </section>
+        }
+      </form>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          [class.disabled]="form().invalid() || form().pending()"
+          [class.loading]="form().submitting()"
+          (click)="onSubmit()"
+        >
+          Create Account
+        </button>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <span>Made with <i>heart_smile</i> by Fynn</span>
+  </footer>
+</div>

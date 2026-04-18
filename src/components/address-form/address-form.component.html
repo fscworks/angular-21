@@ -1,0 +1,53 @@
+<div class="form-grid">
+  @let street = form().street();
+  <div class="field">
+    <label for="street">Street</label>
+    <input
+      id="street"
+      type="text"
+      [field]="form().street"
+      autocomplete="none"
+      autofill="none"
+    />
+    <app-validation-errors [fieldState]="street"></app-validation-errors>
+  </div>
+
+  @let house = form().house();
+  <div class="field">
+    <label for="house">House</label>
+    <input
+      id="house"
+      type="text"
+      [field]="form().house"
+      autocomplete="none"
+      autofill="none"
+    />
+    <app-validation-errors [fieldState]="house"></app-validation-errors>
+  </div>
+
+  @let zip = form().zip();
+  <div class="field">
+    <label for="zip">ZIP</label>
+    <input
+      id="zip"
+      type="text"
+      [field]="form().zip"
+      autocomplete="none"
+      autofill="none"
+    />
+    <app-validation-errors [fieldState]="zip"></app-validation-errors>
+  </div>
+
+  @let city = form().city();
+  <div class="field">
+    <label for="city">City</label>
+    <input
+      id="city"
+      type="text"
+      [field]="form().city"
+      autocomplete="none"
+      autofill="none"
+    />
+    <app-validation-errors [fieldState]="city"></app-validation-errors>
+  </div>
+</div>
