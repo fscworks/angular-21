@@ -1,3 +1,3 @@
-# angular-21
+# Angular 21 Playground
 
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/fscworks/angular-21)
+Playground for Angular 21 with signal forms, custom components and async server side validation
