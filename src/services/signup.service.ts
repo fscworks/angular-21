@@ -1,11 +1,15 @@
 import { Injectable } from '@angular/core';
 import { SignUpForm } from '../common/models';
 
+type SignupFieldErrorPath =
+  | keyof SignUpForm
+  | `address.${keyof SignUpForm['address'] & string}`;
+
 export type SignupResult =
   | { status: 'ok' }
   | {
       status: 'error';
-      fieldErrors: Partial<Record<keyof SignUpForm, string>>;
+      fieldErrors: Partial<Record<SignupFieldErrorPath, string>>;
     };
 
 @Injectable({ providedIn: 'root' })
@@ -13,14 +17,14 @@ export class SignupService {
   async signup(value: SignUpForm): Promise<SignupResult> {
     await new Promise((r) => setTimeout(r, 3000));
 
-    const fieldErrors: Partial<Record<keyof SignUpForm, string>> = {};
+    const fieldErrors: Partial<Record<SignupFieldErrorPath, string>> = {};
 
     if (
-      value.address.street.trim().toLowerCase() === 'seligmannallee' &&
-      value.address.zip.trim().toLowerCase() !== '30173'
+      value.address.street.trim().toLowerCase() === 'teststr' &&
+      value.address.zip.trim() === '12345'
     ) {
-      //fieldErrors.street = 'Thats not a valid street.';
-      //fieldErrors.zip = 'ZIP does not match.';
+      fieldErrors['address.street'] = 'This street is not allowed.';
+      fieldErrors['address.zip'] = 'This ZIP code is not allowed.';
     }
 
     if (Object.keys(fieldErrors).length > 0) {

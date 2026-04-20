@@ -14,6 +14,7 @@ import {
   email,
   validate,
   FieldState,
+  FieldTree,
   validateTree,
   disabled,
   hidden,
@@ -191,7 +192,7 @@ export class FormComponent {
           )) {
             if (!message) continue;
 
-            const fieldTree = (f as any)[key];
+            const fieldTree = this.getFieldTreeByPath(f, key);
             if (!fieldTree) continue;
 
             errors.push({
@@ -217,5 +218,27 @@ export class FormComponent {
         resolve(!taken.includes(username.toLowerCase()));
       }, 2000);
     });
+  }
+
+  private getFieldTreeByPath(
+    root: FieldTree<SignUpForm>,
+    path: string
+  ): FieldTree<unknown> | undefined {
+    let current: unknown = root;
+
+    for (const segment of path.split('.')) {
+      if (
+        typeof current !== 'function' &&
+        (typeof current !== 'object' || current === null)
+      ) {
+        return undefined;
+      }
+
+      current = (current as Record<string, unknown>)[segment];
+    }
+
+    return typeof current === 'function'
+      ? (current as FieldTree<unknown>)
+      : undefined;
   }
 }
