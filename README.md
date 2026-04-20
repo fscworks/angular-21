@@ -41,4 +41,4 @@ npm install
 npm start
 ```
 
-The app uses Angular `21.0.2` packages and TypeScript `5.9`.
+The app uses Angular `21.2.9` packages and TypeScript `5.9`.
