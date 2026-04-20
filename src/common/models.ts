@@ -28,6 +28,14 @@ export interface SignUpForm {
   passwordConfirm: string;
 }
 
+type PrimitiveFieldValue = string | number | boolean | null | undefined;
+
+export type FieldPath<T> = {
+  [K in keyof T & string]: T[K] extends PrimitiveFieldValue
+    ? K
+    : K | `${K}.${FieldPath<T[K]>}`;
+}[keyof T & string];
+
 export const PROFILE_URL_PREFIX = 'profile/';
 
 export const ACCOUNT_TYPE_OPTIONS = [
@@ -36,9 +44,7 @@ export const ACCOUNT_TYPE_OPTIONS = [
   { value: AccountTypeEnum.ADMIN, label: 'Admin' },
 ] as const;
 
-export type SignUpFormFieldPath =
-  | Exclude<keyof SignUpForm, 'address'>
-  | `address.${keyof Address & string}`;
+export type SignUpFormFieldPath = FieldPath<SignUpForm>;
 
 export interface SignUpFieldError {
   path: SignUpFormFieldPath;

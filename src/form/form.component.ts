@@ -31,9 +31,8 @@ import {
   PROFILE_URL_PREFIX,
   SignUpFieldError,
   SignUpForm,
-  SignUpFormFieldPath,
 } from '../common/models';
-import { revealInvalidFields } from '../common/form-helpers';
+import { resolveFieldTree, revealInvalidFields } from '../common/form-helpers';
 import { SignupService } from '../services/signup.service';
 import { ValidationErrorsComponent } from '../common/validation-errors/validation-errors.component';
 import { AddressFormComponent } from '../components/address-form/address-form.component';
@@ -54,28 +53,6 @@ export class FormComponent {
   protected readonly model = signal<SignUpForm>(createSignUpForm());
 
   protected readonly form = form(this.model, (s) => this.buildFormSchema(s));
-
-  private readonly serverErrorFields: Record<
-    SignUpFormFieldPath,
-    () => FieldTree<unknown>
-  > = {
-    username: () => this.asUnknownField(this.form.username),
-    email: () => this.asUnknownField(this.form.email),
-    accountType: () => this.asUnknownField(this.form.accountType),
-    firstname: () => this.asUnknownField(this.form.firstname),
-    lastname: () => this.asUnknownField(this.form.lastname),
-    'address.street': () => this.asUnknownField(this.form.address.street),
-    'address.city': () => this.asUnknownField(this.form.address.city),
-    'address.house': () => this.asUnknownField(this.form.address.house),
-    'address.zip': () => this.asUnknownField(this.form.address.zip),
-    canEditUsers: () => this.asUnknownField(this.form.canEditUsers),
-    canEditPersonalInfo: () =>
-      this.asUnknownField(this.form.canEditPersonalInfo),
-    profileUrl: () => this.asUnknownField(this.form.profileUrl),
-    setUserPassword: () => this.asUnknownField(this.form.setUserPassword),
-    password: () => this.asUnknownField(this.form.password),
-    passwordConfirm: () => this.asUnknownField(this.form.passwordConfirm),
-  };
 
   constructor() {
     effect(() => this.syncProfileUrlWithUsername());
@@ -202,14 +179,23 @@ export class FormComponent {
       return undefined;
     }
 
-    return result.errors.map((error) => this.toServerValidationError(error));
+    const errors = result.errors
+      .map((error) => this.toServerValidationError(error))
+      .filter((error): error is ValidationError.WithOptionalFieldTree =>
+        Boolean(error)
+      );
+
+    return errors.length ? errors : undefined;
   }
 
   private toServerValidationError(
     error: SignUpFieldError
-  ): ValidationError.WithOptionalFieldTree {
+  ): ValidationError.WithOptionalFieldTree | undefined {
+    const fieldTree = resolveFieldTree(this.form, error.path);
+    if (!fieldTree) return undefined;
+
     return {
-      fieldTree: this.serverErrorFields[error.path](),
+      fieldTree,
       kind: 'server',
       message: error.message,
     };
@@ -227,9 +213,5 @@ export class FormComponent {
     }
 
     return Array.from(fields);
-  }
-
-  private asUnknownField<T>(fieldTree: FieldTree<T>): FieldTree<unknown> {
-    return fieldTree as unknown as FieldTree<unknown>;
   }
 }
