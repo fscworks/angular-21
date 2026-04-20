@@ -1,8 +1,13 @@
-@if (fieldState().touched() && fieldState().errors(); as errors) { @for (error
-of errors; track error) {
-<div class="error-message">
-  {{ error.message }}
-</div>
-} } @if (fieldState().pending()) {
-<div class="pending-message">Checking availability...</div>
+@if (fieldState(); as field) {
+  @if (field.touched()) {
+    @for (error of field.errors(); track $index) {
+      <div class="error-message">
+        {{ error.message }}
+      </div>
+    }
+  }
+
+  @if (field.pending()) {
+    <div class="pending-message">Checking availability...</div>
+  }
 }

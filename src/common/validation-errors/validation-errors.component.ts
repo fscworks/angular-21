@@ -7,5 +7,5 @@ import { FieldState } from '@angular/forms/signals';
   styleUrls: ['./validation-errors.component.scss'],
 })
 export class ValidationErrorsComponent {
-  readonly fieldState = input.required<FieldState<unknown, string>>();
+  readonly fieldState = input.required<FieldState<unknown, string | number>>();
 }

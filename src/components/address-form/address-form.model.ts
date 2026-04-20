@@ -1,21 +1,5 @@
-import { signal } from '@angular/core';
 import { required, pattern, SchemaPathTree } from '@angular/forms/signals';
-
-export interface Address {
-  street: string;
-  city: string;
-  house: string;
-  zip: string;
-}
-
-export function createAddressModel() {
-  return signal<Address>({
-    street: '',
-    city: '',
-    house: '',
-    zip: '',
-  });
-}
+import { Address } from '../../common/models';
 
 export function buildAddressSection(a: SchemaPathTree<Address>) {
   required(a.street, { message: 'Street is required' });

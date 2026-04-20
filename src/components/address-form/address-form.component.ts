@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
-import { Address } from './address-form.model';
+import { Address } from '../../common/models';
 import { ValidationErrorsComponent } from '../../common/validation-errors/validation-errors.component';
 
 @Component({

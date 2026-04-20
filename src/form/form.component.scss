@@ -46,16 +46,17 @@ button {
   cursor: pointer;
 }
 
-/* loading state */
+button:disabled {
+  cursor: default;
+}
+
 button.loading {
   position: relative;
   pointer-events: none;
   opacity: 0.85;
-  /* ✅ reserve space so spinner doesn't overlap text */
   padding-right: calc(var(--spacing-sm) + 1.75rem);
 }
 
-/* spinner */
 button.loading::after {
   content: '';
   position: absolute;
@@ -90,6 +91,7 @@ form {
 .form-actions {
   display: flex;
   justify-content: end;
+  grid-column: 1 / -1;
 }
 
 header,

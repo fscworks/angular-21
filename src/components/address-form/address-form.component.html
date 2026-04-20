@@ -6,8 +6,7 @@
       id="street"
       type="text"
       [formField]="form().street"
-      autocomplete="none"
-      autofill="none"
+      autocomplete="address-line1"
     />
     <app-validation-errors [fieldState]="street"></app-validation-errors>
   </div>
@@ -19,8 +18,7 @@
       id="house"
       type="text"
       [formField]="form().house"
-      autocomplete="none"
-      autofill="none"
+      autocomplete="address-line2"
     />
     <app-validation-errors [fieldState]="house"></app-validation-errors>
   </div>
@@ -32,8 +30,7 @@
       id="zip"
       type="text"
       [formField]="form().zip"
-      autocomplete="none"
-      autofill="none"
+      autocomplete="postal-code"
     />
     <app-validation-errors [fieldState]="zip"></app-validation-errors>
   </div>
@@ -45,8 +42,7 @@
       id="city"
       type="text"
       [formField]="form().city"
-      autocomplete="none"
-      autofill="none"
+      autocomplete="address-level2"
     />
     <app-validation-errors [fieldState]="city"></app-validation-errors>
   </div>

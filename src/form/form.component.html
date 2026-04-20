@@ -5,7 +5,7 @@
   <main>
     <div class="form-container">
       <h2>Create Account</h2>
-      <form>
+      <form (submit)="onSubmit($event)" novalidate>
         <section>
           <h3>Account Details</h3>
           <div class="form-grid">
@@ -16,8 +16,7 @@
                 id="username"
                 type="text"
                 [formField]="form.username"
-                autocomplete="none"
-                autofill="none"
+                autocomplete="username"
               />
               <app-validation-errors
                 [fieldState]="username"
@@ -31,8 +30,7 @@
                 id="email"
                 type="email"
                 [formField]="form.email"
-                autocomplete="none"
-                autofill="none"
+                autocomplete="email"
               />
               <app-validation-errors
                 [fieldState]="email"
@@ -42,16 +40,10 @@
             @let accountType = form.accountType();
             <div class="field">
               <label for="accountType">Account Type</label>
-              <select
-                id="accountType"
-                type="accountType"
-                [formField]="form.accountType"
-                autocomplete="none"
-                autofill="none"
-              >
-                <option [value]="AccountTypeEnum.USER">User</option>
-                <option [value]="AccountTypeEnum.MODERATOR">Moderator</option>
-                <option [value]="AccountTypeEnum.ADMIN">Admin</option>
+              <select id="accountType" [formField]="form.accountType">
+                @for (option of accountTypeOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
               </select>
               <app-validation-errors
                 [fieldState]="accountType"
@@ -70,8 +62,7 @@
                 id="firstname"
                 type="text"
                 [formField]="form.firstname"
-                autocomplete="none"
-                autofill="none"
+                autocomplete="given-name"
               />
               <app-validation-errors
                 [fieldState]="firstname"
@@ -85,8 +76,7 @@
                 id="lastname"
                 type="text"
                 [formField]="form.lastname"
-                autocomplete="none"
-                autofill="none"
+                autocomplete="family-name"
               />
               <app-validation-errors
                 [fieldState]="lastname"
@@ -103,24 +93,22 @@
           <h3>Settings</h3>
           <div class="form-grid">
             <div class="grid-split">
-              @let canEditUsers = form.canEditUsers(); @if
-              (!canEditUsers.hidden()) {
-              <div class="field field--switch">
-                <label for="canEditUsers">Edit Users</label>
-                <label class="switch">
-                  <input
-                    id="canEditUsers"
-                    type="checkbox"
-                    [formField]="form.canEditUsers"
-                    autocomplete="none"
-                    autofill="none"
-                  />
-                  <span class="slider round"></span>
-                </label>
-                <app-validation-errors
-                  [fieldState]="canEditUsers"
-                ></app-validation-errors>
-              </div>
+              @let canEditUsers = form.canEditUsers();
+              @if (!canEditUsers.hidden()) {
+                <div class="field field--switch">
+                  <label for="canEditUsers">Edit Users</label>
+                  <label class="switch">
+                    <input
+                      id="canEditUsers"
+                      type="checkbox"
+                      [formField]="form.canEditUsers"
+                    />
+                    <span class="slider round"></span>
+                  </label>
+                  <app-validation-errors
+                    [fieldState]="canEditUsers"
+                  ></app-validation-errors>
+                </div>
               }
               <div class="field field--switch">
                 @let canEditPersonalInfo = form.canEditPersonalInfo();
@@ -131,8 +119,6 @@
                     id="canEditPersonalInfo"
                     type="checkbox"
                     [formField]="form.canEditPersonalInfo"
-                    autocomplete="none"
-                    autofill="none"
                   />
                   <span class="slider round"></span>
                 </label>
@@ -149,8 +135,6 @@
                     id="setUserPassword"
                     type="checkbox"
                     [formField]="form.setUserPassword"
-                    autocomplete="none"
-                    autofill="none"
                   />
                   <span class="slider round"></span>
                 </label>
@@ -166,8 +150,7 @@
                 id="profileUrl"
                 type="text"
                 [formField]="form.profileUrl"
-                autocomplete="none"
-                autofill="none"
+                autocomplete="off"
               />
               <app-validation-errors
                 [fieldState]="profileUrl"
@@ -176,53 +159,50 @@
           </div>
         </section>
         @if (setUserPassword.value()) {
-        <section>
-          <h3>Security</h3>
-          <div class="form-grid">
-            @let password = form.password();
-            <div class="field">
-              <label for="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                [formField]="form.password"
-                autocomplete="none"
-                autofill="none"
-              />
-              <app-validation-errors
-                [fieldState]="password"
-              ></app-validation-errors>
-            </div>
+          <section>
+            <h3>Security</h3>
+            <div class="form-grid">
+              @let password = form.password();
+              <div class="field">
+                <label for="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  [formField]="form.password"
+                  autocomplete="new-password"
+                />
+                <app-validation-errors
+                  [fieldState]="password"
+                ></app-validation-errors>
+              </div>
 
-            @let passwordConfirm = form.passwordConfirm();
-            <div class="field">
-              <label for="passwordConfirm">Confirm Password</label>
-              <input
-                id="passwordConfirm"
-                type="password"
-                [formField]="form.passwordConfirm"
-                autocomplete="none"
-                autofill="none"
-              />
-              <app-validation-errors
-                [fieldState]="passwordConfirm"
-              ></app-validation-errors>
+              @let passwordConfirm = form.passwordConfirm();
+              <div class="field">
+                <label for="passwordConfirm">Confirm Password</label>
+                <input
+                  id="passwordConfirm"
+                  type="password"
+                  [formField]="form.passwordConfirm"
+                  autocomplete="new-password"
+                />
+                <app-validation-errors
+                  [fieldState]="passwordConfirm"
+                ></app-validation-errors>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         }
+        <div class="form-actions">
+          <button
+            type="submit"
+            [class.disabled]="form().invalid() || form().pending()"
+            [class.loading]="form().submitting()"
+            [disabled]="form().submitting()"
+          >
+            Create Account
+          </button>
+        </div>
       </form>
-
-      <div class="form-actions">
-        <button
-          type="button"
-          [class.disabled]="form().invalid() || form().pending()"
-          [class.loading]="form().submitting()"
-          (click)="onSubmit()"
-        >
-          Create Account
-        </button>
-      </div>
     </div>
   </main>
   <footer>

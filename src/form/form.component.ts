@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   signal,
   resource,
@@ -15,6 +14,7 @@ import {
   validate,
   FieldState,
   FieldTree,
+  SchemaPathTree,
   validateTree,
   disabled,
   hidden,
@@ -24,18 +24,20 @@ import {
   ValidationError,
 } from '@angular/forms/signals';
 import { usernameValidator, passwordValidator } from '../common/validators';
-import { AccountTypeEnum, SignUpForm } from '../common/models';
 import {
-  focusFirstInvalidField,
-  setInvalidFieldsAsTouched,
-} from '../common/form-helpers';
+  ACCOUNT_TYPE_OPTIONS,
+  AccountTypeEnum,
+  createSignUpForm,
+  PROFILE_URL_PREFIX,
+  SignUpFieldError,
+  SignUpForm,
+  SignUpFormFieldPath,
+} from '../common/models';
+import { revealInvalidFields } from '../common/form-helpers';
 import { SignupService } from '../services/signup.service';
 import { ValidationErrorsComponent } from '../common/validation-errors/validation-errors.component';
 import { AddressFormComponent } from '../components/address-form/address-form.component';
-import {
-  buildAddressSection,
-  createAddressModel,
-} from '../components/address-form/address-form.model';
+import { buildAddressSection } from '../components/address-form/address-form.model';
 
 @Component({
   selector: 'app-form',
@@ -47,29 +49,56 @@ import {
 export class FormComponent {
   private readonly signupService = inject(SignupService);
 
-  protected AccountTypeEnum = AccountTypeEnum;
+  protected readonly accountTypeOptions = ACCOUNT_TYPE_OPTIONS;
 
-  protected profileUrlPrefix = 'profile/';
+  protected readonly model = signal<SignUpForm>(createSignUpForm());
 
-  protected model = signal<SignUpForm>({
-    username: '',
-    email: '',
-    accountType: AccountTypeEnum.USER,
-    firstname: '',
-    lastname: '',
+  protected readonly form = form(this.model, (s) => this.buildFormSchema(s));
 
-    address: createAddressModel()(),
+  private readonly serverErrorFields: Record<
+    SignUpFormFieldPath,
+    () => FieldTree<unknown>
+  > = {
+    username: () => this.asUnknownField(this.form.username),
+    email: () => this.asUnknownField(this.form.email),
+    accountType: () => this.asUnknownField(this.form.accountType),
+    firstname: () => this.asUnknownField(this.form.firstname),
+    lastname: () => this.asUnknownField(this.form.lastname),
+    'address.street': () => this.asUnknownField(this.form.address.street),
+    'address.city': () => this.asUnknownField(this.form.address.city),
+    'address.house': () => this.asUnknownField(this.form.address.house),
+    'address.zip': () => this.asUnknownField(this.form.address.zip),
+    canEditUsers: () => this.asUnknownField(this.form.canEditUsers),
+    canEditPersonalInfo: () =>
+      this.asUnknownField(this.form.canEditPersonalInfo),
+    profileUrl: () => this.asUnknownField(this.form.profileUrl),
+    setUserPassword: () => this.asUnknownField(this.form.setUserPassword),
+    password: () => this.asUnknownField(this.form.password),
+    passwordConfirm: () => this.asUnknownField(this.form.passwordConfirm),
+  };
 
-    canEditUsers: false,
-    canEditPersonalInfo: false,
-    profileUrl: this.profileUrlPrefix,
-    setUserPassword: true,
-    password: '',
-    passwordConfirm: '',
-  });
+  constructor() {
+    effect(() => this.syncProfileUrlWithUsername());
+  }
 
-  protected form = form(this.model, (s) => {
-    // Account Details
+  protected async onSubmit(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+
+    await submit(this.form, {
+      onInvalid: () => this.revealCurrentInvalidFields(),
+      action: (f) => this.submitSignUpForm(f),
+    });
+  }
+
+  private buildFormSchema(s: SchemaPathTree<SignUpForm>): void {
+    this.addAccountRules(s);
+    this.addPersonalRules(s);
+    buildAddressSection(s.address);
+    this.addSettingsRules(s);
+    this.addPasswordRules(s);
+  }
+
+  private addAccountRules(s: SchemaPathTree<SignUpForm>): void {
     required(s.username, { message: 'Please enter a username.' });
     usernameValidator(s.username);
     validateTree(s, (ctx) => {
@@ -85,15 +114,14 @@ export class FormComponent {
     debounce(s.username, 500);
     validateAsync(s.username, {
       params: ({ value }) => {
-        if (!value() || value().length < 3) return undefined;
-        return value();
+        const username = value().trim();
+        return username.length < 3 ? undefined : username;
       },
       factory: (username) =>
         resource({
           params: username,
-          loader: async ({ params: username }) => {
-            return await this.checkUsernameAvailability(username);
-          },
+          loader: ({ params }) =>
+            this.signupService.isUsernameAvailable(params),
         }),
       onSuccess: (result: boolean) => {
         if (!result) {
@@ -114,23 +142,23 @@ export class FormComponent {
     email(s.email, { message: 'Please enter a valid email.' });
 
     required(s.accountType, { message: 'Please select an account type.' });
+  }
 
-    // Personal Details
+  private addPersonalRules(s: SchemaPathTree<SignUpForm>): void {
     required(s.firstname, { message: 'Please enter a firstname.' });
     required(s.lastname, { message: 'Please enter a lastname.' });
+  }
 
-    // Address
-    buildAddressSection(s.address);
-
-    // Settings
+  private addSettingsRules(s: SchemaPathTree<SignUpForm>): void {
     required(s.canEditUsers);
     hidden(
       s.canEditUsers,
       ({ valueOf }) => valueOf(s.accountType) === AccountTypeEnum.USER
     );
     disabled(s.profileUrl);
+  }
 
-    // Password
+  private addPasswordRules(s: SchemaPathTree<SignUpForm>): void {
     required(s.password, { message: 'Please enter a password.' });
     passwordValidator(s.password);
     required(s.passwordConfirm, { message: 'Please confirm the password.' });
@@ -144,101 +172,64 @@ export class FormComponent {
           }
         : null;
     });
-  });
-
-  private readonly invalidFields = computed<readonly FieldState<unknown>[]>(
-    () => {
-      const fields = new Set<FieldState<unknown>>();
-      for (const err of this.form().errorSummary()) {
-        fields.add(err.fieldTree());
-      }
-      return Array.from(fields);
-    }
-  );
-
-  constructor() {
-    // Whenever username changes, update profileUrl
-    effect(() => {
-      const username = this.form.username().value().trim().toLocaleLowerCase();
-      const profileUrl = this.form.profileUrl().value();
-
-      const url = username ? `${this.profileUrlPrefix}${username}` : profileUrl;
-
-      if (profileUrl !== url && this.form.username().valid()) {
-        this.form.profileUrl().controlValue.set(url);
-      } else if (
-        profileUrl.split('/')[1].length > 0 &&
-        !this.form.username().valid()
-      ) {
-        this.form.profileUrl().controlValue.set(this.profileUrlPrefix);
-      }
-    });
   }
 
-  protected onSubmit() {
-    if (this.form().invalid()) {
-      setInvalidFieldsAsTouched(this.invalidFields());
-      focusFirstInvalidField(this.invalidFields());
-    } else {
-      submit(this.form, async (f) => {
-        const value = f().value();
-        const result = await this.signupService.signup(value);
+  private syncProfileUrlWithUsername(): void {
+    const username = this.form.username().value().trim().toLowerCase();
+    const profileUrl = this.form.profileUrl().value();
 
-        if (result.status === 'error') {
-          const errors: ValidationError.WithOptionalFieldTree[] = [];
+    if (!this.form.username().valid()) {
+      if (profileUrl !== PROFILE_URL_PREFIX) {
+        this.form.profileUrl().controlValue.set(PROFILE_URL_PREFIX);
+      }
+      return;
+    }
 
-          for (const [key, message] of Object.entries(
-            result.fieldErrors ?? {}
-          )) {
-            if (!message) continue;
+    if (!username) return;
 
-            const fieldTree = this.getFieldTreeByPath(f, key);
-            if (!fieldTree) continue;
-
-            errors.push({
-              fieldTree,
-              kind: 'server',
-              message,
-            });
-          }
-
-          return errors.length ? errors : undefined;
-        }
-
-        console.log('Submitted:', value);
-        return undefined;
-      });
+    const nextProfileUrl = `${PROFILE_URL_PREFIX}${username}`;
+    if (profileUrl !== nextProfileUrl) {
+      this.form.profileUrl().controlValue.set(nextProfileUrl);
     }
   }
 
-  private checkUsernameAvailability(username: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const taken = ['admin', 'system', 'user123'];
-        resolve(!taken.includes(username.toLowerCase()));
-      }, 2000);
-    });
-  }
+  private async submitSignUpForm(
+    f: FieldTree<SignUpForm>
+  ): Promise<readonly ValidationError.WithOptionalFieldTree[] | undefined> {
+    const result = await this.signupService.signup(f().value());
 
-  private getFieldTreeByPath(
-    root: FieldTree<SignUpForm>,
-    path: string
-  ): FieldTree<unknown> | undefined {
-    let current: unknown = root;
-
-    for (const segment of path.split('.')) {
-      if (
-        typeof current !== 'function' &&
-        (typeof current !== 'object' || current === null)
-      ) {
-        return undefined;
-      }
-
-      current = (current as Record<string, unknown>)[segment];
+    if (result.status === 'ok') {
+      return undefined;
     }
 
-    return typeof current === 'function'
-      ? (current as FieldTree<unknown>)
-      : undefined;
+    return result.errors.map((error) => this.toServerValidationError(error));
+  }
+
+  private toServerValidationError(
+    error: SignUpFieldError
+  ): ValidationError.WithOptionalFieldTree {
+    return {
+      fieldTree: this.serverErrorFields[error.path](),
+      kind: 'server',
+      message: error.message,
+    };
+  }
+
+  private revealCurrentInvalidFields(): void {
+    revealInvalidFields(this.getInvalidFields());
+  }
+
+  private getInvalidFields(): readonly FieldState<unknown>[] {
+    const fields = new Set<FieldState<unknown>>();
+
+    for (const error of this.form().errorSummary()) {
+      fields.add(error.fieldTree());
+    }
+
+    return Array.from(fields);
+  }
+
+  private asUnknownField<T>(fieldTree: FieldTree<T>): FieldTree<unknown> {
+    return fieldTree as unknown as FieldTree<unknown>;
   }
 }

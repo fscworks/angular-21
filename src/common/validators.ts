@@ -5,10 +5,9 @@ export function usernameValidator(field: SchemaPath<string>) {
     const value = ctx.value();
 
     if (!value) {
-      return null; // Let required validator handle empty values
+      return null;
     }
 
-    // Must be alphanumeric only
     if (!/^[a-zA-Z0-9]+$/.test(value)) {
       return {
         kind: 'custom',
@@ -16,7 +15,6 @@ export function usernameValidator(field: SchemaPath<string>) {
       };
     }
 
-    // Must be 3-20 characters
     if (value.length < 3 || value.length > 20) {
       return {
         kind: 'custom',
@@ -44,7 +42,6 @@ export function passwordValidator(field: SchemaPath<string>) {
       };
     }
 
-    // Must be 3-20 characters
     if (value.length < 6 || value.length > 30) {
       return {
         kind: 'custom',
