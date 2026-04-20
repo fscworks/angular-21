@@ -6,9 +6,7 @@ export function focusFirstInvalidField(
   const first = invalidFields[0];
   if (!first) return;
 
-  const name = first.name();
-  const el = document.querySelector<HTMLElement>(`[name="${name}"]`);
-  el?.focus();
+  first.focusBoundControl();
 }
 
 export function setInvalidFieldsAsTouched(

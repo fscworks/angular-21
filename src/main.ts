@@ -20,9 +20,12 @@ bootstrapApplication(App, {
     provideZonelessChangeDetection(),
     provideSignalFormsConfig({
       classes: {
-        'field-valid': (s) => s.valid(),
-        'field-invalid': (s) => s.invalid() && s.touched() && !s.pending(),
-        'field-pending': (s) => s.pending(),
+        'field-valid': (field) => field.state().valid(),
+        'field-invalid': (field) =>
+          field.state().invalid() &&
+          field.state().touched() &&
+          !field.state().pending(),
+        'field-pending': (field) => field.state().pending(),
       },
     }),
   ],

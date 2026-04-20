@@ -9,11 +9,10 @@ import {
 } from '@angular/core';
 import {
   form,
-  Field,
+  FormField,
   required,
   email,
   validate,
-  customError,
   FieldState,
   validateTree,
   disabled,
@@ -42,7 +41,7 @@ import {
   templateUrl: './form.component.html',
   styleUrl: './form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Field, ValidationErrorsComponent, AddressFormComponent],
+  imports: [FormField, ValidationErrorsComponent, AddressFormComponent],
 })
 export class FormComponent {
   private readonly signupService = inject(SignupService);
@@ -76,7 +75,7 @@ export class FormComponent {
       return ctx.value().username.toLowerCase() === 'admin' &&
         ctx.value().accountType !== AccountTypeEnum.ADMIN
         ? {
-            field: ctx.field.username,
+            fieldTree: ctx.fieldTreeOf(s.username),
             kind: 'usernameRestricted',
             message: 'Only admin users can be named admin',
           }
@@ -97,10 +96,10 @@ export class FormComponent {
         }),
       onSuccess: (result: boolean) => {
         if (!result) {
-          return customError({
+          return {
             kind: 'username_taken',
             message: 'This username is already taken',
-          });
+          };
         }
         return null;
       },
@@ -150,7 +149,7 @@ export class FormComponent {
     () => {
       const fields = new Set<FieldState<unknown>>();
       for (const err of this.form().errorSummary()) {
-        fields.add(err.field());
+        fields.add(err.fieldTree());
       }
       return Array.from(fields);
     }
@@ -165,12 +164,12 @@ export class FormComponent {
       const url = username ? `${this.profileUrlPrefix}${username}` : profileUrl;
 
       if (profileUrl !== url && this.form.username().valid()) {
-        this.form.profileUrl().setControlValue(url);
+        this.form.profileUrl().controlValue.set(url);
       } else if (
         profileUrl.split('/')[1].length > 0 &&
         !this.form.username().valid()
       ) {
-        this.form.profileUrl().setControlValue(this.profileUrlPrefix);
+        this.form.profileUrl().controlValue.set(this.profileUrlPrefix);
       }
     });
   }
@@ -185,18 +184,18 @@ export class FormComponent {
         const result = await this.signupService.signup(value);
 
         if (result.status === 'error') {
-          const errors: ValidationError.WithOptionalField[] = [];
+          const errors: ValidationError.WithOptionalFieldTree[] = [];
 
           for (const [key, message] of Object.entries(
             result.fieldErrors ?? {}
           )) {
             if (!message) continue;
 
-            const field = (f as any)[key];
-            if (!field) continue;
+            const fieldTree = (f as any)[key];
+            if (!fieldTree) continue;
 
             errors.push({
-              field,
+              fieldTree,
               kind: 'server',
               message,
             });
